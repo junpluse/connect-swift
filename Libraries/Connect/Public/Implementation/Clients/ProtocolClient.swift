@@ -456,12 +456,14 @@ private final class PendingRequestCallbacks: @unchecked Sendable {
     }
 
     func enqueue(_ action: @escaping (RequestCallbacks<Data>) -> Void) {
-        self.lock.perform {
-            if let callbacks = self.callbacks {
-                action(callbacks)
-            } else {
+        let callbacks = self.lock.perform {
+            if self.callbacks == nil {
                 self.queue.append(action)
             }
+            return self.callbacks
+        }
+        if let callbacks {
+            action(callbacks)
         }
     }
 }
