@@ -71,11 +71,18 @@ final class URLSessionStream: NSObject, @unchecked Sendable {
                 guard let baseAddress = pointer.baseAddress else {
                     throw Error.unableToFindBaseAddress
                 }
-
-                return self.writeStream.write(
-                    baseAddress.assumingMemoryBound(to: UInt8.self),
-                    maxLength: remaining.count
-                )
+                switch self.writeStream.streamStatus {
+                case .error:
+                    throw self.writeStream.streamError ?? Error.unableToWriteData
+                case .closed:
+                    throw Error.unableToWriteData
+                default:
+                    print("🚧 writing…")
+                    return self.writeStream.write(
+                        baseAddress.assumingMemoryBound(to: UInt8.self),
+                        maxLength: remaining.count
+                    )
+                }
             }
 
             if bytesWritten >= 0 {
